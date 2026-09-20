@@ -1,58 +1,58 @@
 import config from "../config/config";
-import { Client, TablesDB, Storage, Query, ID } from "appwrite";
+import { Client, TablesDB, Storage, Query, ID,Permission,Role } from "appwrite";
 
-export class Database_Service{
+export class Database_Service {
     client = new Client()
     database;
     bucket;
-    constructor(){
+    constructor() {
         this.client.setEndpoint(config.appwriteUrl)
-        .setProject(config.appwriteProjectId)
+            .setProject(config.appwriteProjectId)
 
         this.database = new TablesDB(this.client);
         this.bucket = new Storage(this.client);
     }
 
-    async createPost({title,slug,content,featuredImage,status,userId}){
+    async createPost({ title, slug, content, featuredImage, status, userId }) {
         try {
             return await this.database.createRow(
                 config.appwriteDatabaseId,
                 config.appwriteTableId,
-                slug,{
-                    title,
-                    content,
-                    featuredImage,
-                    status,
-                    userId
-                }
+                slug, {
+                title,
+                content,
+                featuredImage,
+                status,
+                userId
+            }
             )
-            
+
         } catch (error) {
             console.error("Failed to create post:", error);
             throw error;
         }
     }
 
-    async updatePost(slug,{title,content,featuredImage,status}){
+    async updatePost(slug, { title, content, featuredImage, status }) {
         try {
             return await this.database.updateRow(
                 config.appwriteDatabaseId,
                 config.appwriteTableId,
-                slug,{
-                    title,
-                    content,
-                    featuredImage,
-                    status,
-                }
+                slug, {
+                title,
+                content,
+                featuredImage,
+                status,
+            }
             )
-            
+
         } catch (error) {
             console.error("Failed to update post:", error);
             throw error;
         }
     }
 
-    async deletePost(slug){
+    async deletePost(slug) {
         try {
             await this.database.deleteRow(
                 config.appwriteDatabaseId,
@@ -67,7 +67,7 @@ export class Database_Service{
         }
     }
 
-    async getPost(slug){
+    async getPost(slug) {
         try {
             return await this.database.getRow(
                 config.appwriteDatabaseId,
@@ -75,41 +75,45 @@ export class Database_Service{
                 slug
             )
             return true;
-            
+
         } catch (error) {
             console.error("Failed to load post:", error);
             throw error;
         }
     }
 
-    async getPosts(queries = [Query.equal("status", "active")]){
+    async getPosts(queries = [Query.equal("status", "active")]) {
         try {
-             return await this.database.listRows(
+            return await this.database.listRows(
                 config.appwriteDatabaseId,
                 config.appwriteTableId,
                 queries
             )
-            
+
         } catch (error) {
             console.error("Failed to load posts:", error);
             throw error;
         }
     }
 
-    async uploadFile(file){
+    async uploadFile(file) {
         try {
             return await this.bucket.createFile(
-            config.appwriteBucketId
-            ,ID.unique(),
-            file)
+                config.appwriteBucketId,
+                ID.unique(),
+                file,
+                [
+                    Permission.read(Role.any())
+                ]
+            );
 
         } catch (error) {
             console.error("Failed to upload file:", error);
             throw error;
         }
-    } 
+    }
 
-    async deleteFile(fileid){
+    async deleteFile(fileid) {
         try {
             await this.bucket.deleteFile(
                 config.appwriteBucketId,
@@ -122,7 +126,7 @@ export class Database_Service{
         }
     }
 
-    getFilePreview(fileId){
+    getFilePreview(fileId) {
         return this.bucket.getFileView(
             config.appwriteBucketId,
             fileId
